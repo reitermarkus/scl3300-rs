@@ -1,0 +1,19 @@
+[package]
+name = "scl3300"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+readme = "ReadMe.md"
+description = "Driver for the SCL3300 inclinometer."
+documentation = "https://docs.rs/scl3300"
+repository = "https://github.com/reitermarkus/scl3300-rs"
+homepage = "https://github.com/reitermarkus/scl3300-rs"
+keywords = ["scl3300", "inclinometer"]
+categories = ["embedded", "hardware-support", "no-std"]
+
+[dependencies]
+embedded-hal = "0.2"
+libm = { version = "0.2", optional = true }
+
+[features]
+default = ["libm"]
