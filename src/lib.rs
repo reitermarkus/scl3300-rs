@@ -56,8 +56,15 @@ where
 
     Ok(Status::from_bits_truncate(frame.data()))
   }
+  
+  pub fn read(&mut self) -> Reader<'_, '_> {
+    Reader {
+      scl: self,
+      value: None,
+    }
+  }
 
-  pub fn read(&mut self, mut outputs: &mut [(Output, &mut u16)]) -> Result<(), Error<E>> {
+  pub fn transaction(&mut self, mut outputs: &mut [(Output, &mut u16)]) -> Result<(), Error<E>> {
     let mut previous_output: Option<&mut u16> = None;
 
     for (output, value) in outputs {
