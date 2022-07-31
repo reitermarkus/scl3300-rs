@@ -1,6 +1,6 @@
 #![cfg_attr(not(test), no_std)]
 
-use embedded_hal::blocking::{delay::DelayMs, spi::{Write, Transfer}};
+use embedded_hal::blocking::{delay::DelayMs, spi::{Transfer}};
 
 mod error;
 pub use error::*;
@@ -123,5 +123,41 @@ where
     log::debug!("transfer after: {:?}", frame.as_bytes_mut());
 
     Ok(frame)
+  }
+}
+
+#[must_use = "`.finish()` must be called to read the last value"]
+struct Reader<'s, 'v, SPI> {
+  scl: &'s mut Scl3300<SPI>,
+  value: Option<&'v mut u16>,
+}
+
+impl<'s, 'v, SPI, E> Reader<'s, 'v, SPI> 
+where
+  SPI: Transfer<u8, Error = E>,
+{
+  pub fn temperature<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+    let frame = self.scl.transfer(Operation::Read(Output::Temperature))?;
+    frame.check_crc()?;
+
+    if let Some(v) = self.value.take() {
+      *v = frame.data();
+    }
+
+    Ok(Reader {
+      scl: self.scl,
+      value: Some(v),
+    })
+  }
+
+  pub fn finish(mut self) -> Result<(), Error> {
+    let frame = self.scl.transfer(Operation::Read(Output::Status))?;
+    frame.check_crc()?;
+
+    if let Some(v) = self.value.take() {
+      *v = frame.data();
+    }
+
+    Ok(())
   }
 }
