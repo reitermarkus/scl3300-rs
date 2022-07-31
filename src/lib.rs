@@ -134,7 +134,7 @@ where
 }
 
 #[must_use = "`.finish()` must be called to read the last value"]
-struct Reader<'s, 'v, SPI> {
+pub struct Reader<'s, 'v, SPI> {
   scl: &'s mut Scl3300<SPI>,
   value: Option<&'v mut u16>,
 }
@@ -143,8 +143,8 @@ impl<'s, 'v, SPI, E> Reader<'s, 'v, SPI>
 where
   SPI: Transfer<u8, Error = E>,
 {
-  pub fn temperature<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
-    let frame = self.scl.transfer(Operation::Read(Output::Temperature))?;
+  fn read<'r>(mut self, output: Output, value: Option<&'r mut u16>) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+    let frame = self.scl.transfer(Operation::Read(output))?;
     frame.check_crc()?;
 
     if let Some(v) = self.value.take() {
@@ -153,18 +153,16 @@ where
 
     Ok(Reader {
       scl: self.scl,
-      value: Some(v),
+      value,
     })
+  }
+  
+  pub fn temperature<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+    self.read(Output::Temperature, Some(v))
   }
 
   pub fn finish(mut self) -> Result<(), Error<E>> {
-    let frame = self.scl.transfer(Operation::Read(Output::Status))?;
-    frame.check_crc()?;
-
-    if let Some(v) = self.value.take() {
-      *v = frame.data();
-    }
-
+    self.read(Output::Status, None)?;
     Ok(())
   }
 }
