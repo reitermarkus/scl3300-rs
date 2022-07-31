@@ -43,7 +43,8 @@ where
 
     self.transfer(Operation::Read(Output::Status))?;
     self.transfer(Operation::Read(Output::Status))?;
-    self.transfer(Operation::Read(Output::Status))?;
+    
+    let frame = self.transfer(Operation::Read(Output::Status))?;
     frame.check_crc()?;
     Ok(Status::from_bits_truncate(frame.data()))
   }
@@ -54,31 +55,7 @@ where
       value: None,
     }
   }
-
-  pub fn transaction(&mut self, outputs: &mut [(Output, &mut u16)]) -> Result<(), Error<E>> {
-    let mut previous_output: Option<&mut u16> = None;
-
-    for (output, value) in outputs {
-      let frame = self.transfer(Operation::Read(*output))?;
-      frame.check_crc()?;
-
-      if let Some(v) = previous_output.take() {
-        *v = frame.data();
-      }
-
-      previous_output = Some(value);
-    }
-
-    let frame = self.transfer(Operation::Read(Output::Status))?;
-    frame.check_crc()?;
-
-    if let Some(v) = previous_output.take() {
-      *v = frame.data();
-    }
-
-    Ok(())
-  }
-
+  
   pub fn whoami(&mut self) -> Result<bool, Error<E>> {
     self.transfer(Operation::Read(Output::WhoAmI))?;
     let frame = self.transfer(Operation::Read(Output::Status))?;
