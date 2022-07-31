@@ -150,7 +150,7 @@ where
     })
   }
 
-  pub fn finish(mut self) -> Result<(), Error> {
+  pub fn finish(mut self) -> Result<(), Error<E>> {
     let frame = self.scl.transfer(Operation::Read(Output::Status))?;
     frame.check_crc()?;
 
