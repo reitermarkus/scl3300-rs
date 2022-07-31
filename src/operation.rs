@@ -1,16 +1,19 @@
 use crate::{Frame, MeasurementMode};
 
+#[derive(Debug, Clone, Copy)]
 pub enum Axis {
   X,
   Y,
   Z,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum Bank {
   Zero,
   One,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum Output {
   Acceleration(Axis),
   Angle(Axis),

@@ -10,6 +10,12 @@ pub enum MeasurementMode {
   InclinationLowNoise,
 }
 
+impl Default for MeasurementMode {
+  fn default() -> Self {
+    Self::FullScale12
+  }
+}
+
 impl MeasurementMode {
   pub const fn sto_thresholds(&self) -> (i16, i16) {
     match self {
