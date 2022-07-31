@@ -64,7 +64,7 @@ where
     }
   }
 
-  pub fn transaction(&mut self, mut outputs: &mut [(Output, &mut u16)]) -> Result<(), Error<E>> {
+  pub fn transaction(&mut self, outputs: &mut [(Output, &mut u16)]) -> Result<(), Error<E>> {
     let mut previous_output: Option<&mut u16> = None;
 
     for (output, value) in outputs {
@@ -157,36 +157,36 @@ where
     })
   }
   
-  pub fn acceleration_x<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+  pub fn acceleration_x<'r>(self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
     self.read(Output::Acceleration(Axis::X), Some(v))
   }
   
-  pub fn acceleration_y<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+  pub fn acceleration_y<'r>(self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
     self.read(Output::Acceleration(Axis::Y), Some(v))
   }
   
-  pub fn acceleration_z<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+  pub fn acceleration_z<'r>(self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
     self.read(Output::Acceleration(Axis::Z), Some(v))
   }
 
-  pub fn angle_x<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+  pub fn angle_x<'r>(self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
     self.read(Output::Angle(Axis::X), Some(v))
   }
   
-  pub fn angle_y<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+  pub fn angle_y<'r>(self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
     self.read(Output::Angle(Axis::Y), Some(v))
   }
   
-  pub fn angle_z<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+  pub fn angle_z<'r>(self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
     self.read(Output::Angle(Axis::Z), Some(v))
   }
   
-  pub fn temperature<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+  pub fn temperature<'r>(self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
     self.read(Output::Temperature, Some(v))
   }
 
-  pub fn finish(mut self) -> Result<(), Error<E>> {
-    self.read(Output::Status, None)?;
+  pub fn finish(self) -> Result<(), Error<E>> {
+    let _ = self.read(Output::Status, None)?;
     Ok(())
   }
 }
