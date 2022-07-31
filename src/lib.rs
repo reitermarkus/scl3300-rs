@@ -34,26 +34,17 @@ where
   }
 
   pub fn init<D: DelayMs<u8>>(&mut self, delay: &mut D, mode: MeasurementMode) -> Result<Status, Error<E>> {
-    let frame = self.transfer(Operation::Reset)?;
-    log::debug!("wake_up: {:?}", frame.return_status());
+    self.transfer(Operation::Reset)?;
     delay.delay_ms(1);
 
-    let frame = self.transfer(Operation::ChangeMode(mode))?;
-    log::debug!("reset: {:?}", frame.return_status());
-
-    let frame = self.transfer(Operation::EnableAngleOutputs)?;
-    log::debug!("change_mode: {:?}", frame.return_status());
+    self.transfer(Operation::ChangeMode(mode))?;
+    self.transfer(Operation::EnableAngleOutputs)?;
     delay.delay_ms(mode.wait_time());
 
-    let frame = self.transfer(Operation::Read(Output::Status))?;
-    log::debug!("enable_angle_outputs: {:?}", frame.return_status());
-    let frame = self.transfer(Operation::Read(Output::Status))?;
-    log::debug!("status: {:?}", frame.return_status());
-    let frame = self.transfer(Operation::Read(Output::Status))?;
-    log::debug!("status: {:?}", frame.return_status());
-
+    self.transfer(Operation::Read(Output::Status))?;
+    self.transfer(Operation::Read(Output::Status))?;
+    self.transfer(Operation::Read(Output::Status))?;
     frame.check_crc()?;
-
     Ok(Status::from_bits_truncate(frame.data()))
   }
   
