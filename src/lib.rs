@@ -157,6 +157,30 @@ where
     })
   }
   
+  pub fn acceleration_x<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+    self.read(Output::Acceleration(Axis::X), Some(v))
+  }
+  
+  pub fn acceleration_y<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+    self.read(Output::Acceleration(Axis::Y), Some(v))
+  }
+  
+  pub fn acceleration_z<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+    self.read(Output::Acceleration(Axis::Z), Some(v))
+  }
+
+  pub fn angle_x<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+    self.read(Output::Angle(Axis::X), Some(v))
+  }
+  
+  pub fn angle_y<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+    self.read(Output::Angle(Axis::Y), Some(v))
+  }
+  
+  pub fn angle_z<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
+    self.read(Output::Angle(Axis::Z), Some(v))
+  }
+  
   pub fn temperature<'r>(mut self, v: &'r mut u16) -> Result<Reader<'s, 'r, SPI>, Error<E>> {
     self.read(Output::Temperature, Some(v))
   }
