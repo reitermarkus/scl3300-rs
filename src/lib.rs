@@ -103,31 +103,12 @@ where
     Ok(())
   }
 
-  // pub fn write(&mut self, operation: Operation) -> Result<(), Error<E>> {
-//     let mut frame = operation.to_frame();
-//
-//     log::debug!("write before: {:?}", frame.as_bytes());
-//
-//     let res = match self.spi.write(frame.as_bytes()) {
-//       Ok(()) => Ok(()),
-//       Err(err) => Err(Error::Spi(err)),
-//     };
-//
-//     log::debug!("write after: {:?}", frame.as_bytes_mut());
-//
-//     res
-//   }
-
   fn transfer(&mut self, operation: Operation) -> Result<Frame, Error<E>> {
     let mut frame = operation.to_frame();
-
-    log::debug!("transfer before: {:?}", frame.as_bytes_mut());
 
     if let Err(err) = self.spi.transfer(frame.as_bytes_mut()) {
       return Err(Error::Spi(err))
     }
-
-    log::debug!("transfer after: {:?}", frame.as_bytes_mut());
 
     Ok(frame)
   }
