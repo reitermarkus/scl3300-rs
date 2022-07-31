@@ -57,7 +57,7 @@ where
     Ok(Status::from_bits_truncate(frame.data()))
   }
   
-  pub fn read(&mut self) -> Reader<'_, '_, Self> {
+  pub fn read(&mut self) -> Reader<'_, '_, SPI> {
     Reader {
       scl: self,
       value: None,
