@@ -2,9 +2,9 @@ use crate::error::Error;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ReturnStatus {
-  StartupInProgress = 0b00,
-  NormalOperation = 0b01,
-  Error = 0b11,
+  StartupInProgress,
+  NormalOperation,
+  Error,
 }
 
 #[derive(Debug, Clone)]

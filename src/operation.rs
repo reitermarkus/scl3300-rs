@@ -7,7 +7,7 @@ pub enum Axis {
   Z,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Bank {
   Zero,
   One,
@@ -22,10 +22,14 @@ pub enum Output {
   Status,
   Error1,
   Error2,
+  // No need to use this for now since the library keeps track of this implicitly.
+  #[allow(unused)]
   Command,
   WhoAmI,
   Serial1,
   Serial2,
+  // No need to use this for now since switching banks is only done in one place.
+  #[allow(unused)]
   CurrentBank,
 }
 

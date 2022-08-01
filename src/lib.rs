@@ -13,9 +13,9 @@ pub use measurement::*;
 mod measurement_mode;
 pub use measurement_mode::*;
 mod operation;
-pub use operation::*;
+use operation::*;
 mod reader;
-use reader::*;
+pub use reader::*;
 mod status;
 pub use status::*;
 
@@ -67,10 +67,11 @@ where
     self.write(Operation::Read(Output::Status), delay, None)?;
 
     let frame = self.transfer(Operation::Read(Output::Status), delay, None)?;
-    Ok(Status::from_bits_truncate(frame.data()))
+    Ok(unsafe { Status::from_bits_unchecked(frame.data()) })
   }
 
-  pub fn read<'d, D: DelayUs<u32>>(&mut self, delay: &'d mut D) -> Reader<'_, 'd, 'static, SPI, D> {
+  /// Start a read transaction, see [`Reader`](struct.Reader.html) for more information.
+  pub fn read<'d, D: DelayUs<u32>>(&mut self, delay: &'d mut D) -> Reader<'_, 'd, 'static, SPI, E, D> {
     Reader::new(self, delay)
   }
 
@@ -87,15 +88,13 @@ where
     Ok(())
   }
 
-  fn write<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_ms: Option<NonZeroU32>) -> Result<(), Error<E>> {
-    self.transfer_inner(operation)?;
-    delay.delay_us(wait_ms.unwrap_or(MIN_WAIT_TIME_US).get());
+  fn write<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_us: Option<NonZeroU32>) -> Result<(), Error<E>> {
+    self.transfer_inner(operation, delay, wait_us)?;
     Ok(())
   }
 
-  fn transfer<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_ms: Option<NonZeroU32>) -> Result<Frame, Error<E>> {
-    let frame = self.transfer_inner(operation)?;
-    delay.delay_us(wait_ms.unwrap_or(MIN_WAIT_TIME_US).get());
+  fn transfer<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_us: Option<NonZeroU32>) -> Result<Frame, Error<E>> {
+    let frame = self.transfer_inner(operation, delay, wait_us)?;
     frame.check_crc()?;
 
     match frame.return_status() {
@@ -105,10 +104,11 @@ where
     }
   }
 
-  fn transfer_inner(&mut self, operation: Operation) -> Result<Frame, Error<E>> {
+  fn transfer_inner<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_us: Option<NonZeroU32>) -> Result<Frame, Error<E>> {
     let mut frame = operation.to_frame();
-
-    if let Err(err) = self.spi.transfer(frame.as_bytes_mut()) {
+    let res = self.spi.transfer(frame.as_bytes_mut());
+    delay.delay_us(wait_us.unwrap_or(MIN_WAIT_TIME_US).get());
+    if let Err(err) = res {
       return Err(Error::Spi(err))
     }
 
