@@ -1,18 +1,27 @@
 use embedded_hal::blocking::{delay::DelayUs, spi::Transfer};
 
-use crate::{Scl3300, Acceleration, Inclination, Temperature, SelfTest, WhoAmI, Serial, Status, Error1, Error2, Operation, Output, Axis, Bank, Error};
+use crate::{
+  Scl3300, Normal,
+  Error,
+  operation::{Operation, Output, Axis, Bank},
+  output::{
+    Acceleration, Inclination, Temperature, SelfTest, ComponentId, Serial,
+    Status, Error1, Error2,
+  },
+};
 
 enum OutputVal<'v> {
   U16(&'v mut u16),
   Status(&'v mut Status),
   Error1(&'v mut Error1),
   Error2(&'v mut Error2),
+  WhoAmI(&'v mut u8),
 }
 
-/// Read measurement and status values
+/// Read measurement and status values.
 #[must_use = "`.finish()` must be called to read the last value"]
 pub struct Reader<'s, 'd, 'v, SPI, E, D> {
-  scl: &'s mut Scl3300<SPI>,
+  scl: &'s mut Scl3300<SPI, Normal>,
   delay: &'d mut D,
   previous_value: Option<OutputVal<'v>>,
   bank: Bank,
@@ -24,7 +33,7 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  pub(crate) fn new(scl: &'s mut Scl3300<SPI>, delay: &'d mut D) -> Self {
+  pub(crate) fn new(scl: &'s mut Scl3300<SPI, Normal>, delay: &'d mut D) -> Self {
     Reader { scl, delay, previous_value: None, bank: Bank::Zero, error: Ok(()) }
   }
 
@@ -47,6 +56,9 @@ where
         OutputVal::Error2(v) => {
           *v = unsafe { Error2::from_bits_unchecked(data) };
         },
+        OutputVal::WhoAmI(v) => {
+          *v = data.to_be_bytes()[1];
+        }
       }
     }
 
@@ -91,7 +103,7 @@ where
 
   /// Read measured acceleration.
   pub fn acceleration<'r>(self, acc: &'r mut Acceleration) -> Reader<'s, 'd, 'r, SPI, E, D> {
-    acc.mode = self.scl.mode.expect("SCL3300 not initialized");
+    acc.mode = self.scl.mode.mode;
     self.read(Output::Acceleration(Axis::X), Some(OutputVal::U16(&mut acc.x)))
       .read(Output::Acceleration(Axis::Y), Some(OutputVal::U16(&mut acc.y)))
       .read(Output::Acceleration(Axis::Z), Some(OutputVal::U16(&mut acc.z)))
@@ -112,14 +124,14 @@ where
 
   /// Read self-test output.
   pub fn self_test<'r>(self, st: &'r mut SelfTest) -> Reader<'s, 'd, 'r, SPI, E, D> {
-    st.mode = self.scl.mode.expect("SCL3300 not initialized");
+    st.mode = self.scl.mode.mode;
     self.read(Output::SelfTest, Some(OutputVal::U16(&mut st.sto)))
   }
 
   /// Read `WHOAMI` output.
-  pub fn whoami<'r>(self, w: &'r mut WhoAmI) -> Reader<'s, 'd, 'r, SPI, E, D> {
+  pub fn whoami<'r>(self, w: &'r mut ComponentId) -> Reader<'s, 'd, 'r, SPI, E, D> {
     self.switch_to_bank(Bank::Zero)
-      .read(Output::WhoAmI, Some(OutputVal::U16(&mut w.whoami)))
+      .read(Output::WhoAmI, Some(OutputVal::WhoAmI(&mut w.id)))
   }
 
   /// Read serial number.

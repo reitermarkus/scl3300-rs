@@ -1,3 +1,4 @@
+/// An error.
 #[derive(Debug)]
 pub enum Error<E> {
   /// Startup error
@@ -6,5 +7,6 @@ pub enum Error<E> {
   ReturnStatus,
   /// CRC checksum mismatch
   Crc,
+  /// SPI error
   Spi(E),
 }

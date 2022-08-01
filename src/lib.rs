@@ -1,32 +1,44 @@
 #![cfg_attr(not(test), no_std)]
 
-use core::num::NonZeroU32;
+use core::{num::NonZeroU32, marker::PhantomData};
 
 use embedded_hal::blocking::{delay::DelayUs, spi::{Transfer}};
 
 mod error;
 pub use error::*;
 mod frame;
-pub use frame::*;
-mod measurement;
-pub use measurement::*;
+use frame::*;
+pub mod output;
+pub use output::*;
 mod measurement_mode;
 pub use measurement_mode::*;
 mod operation;
 use operation::*;
 mod reader;
 pub use reader::*;
-mod status;
-pub use status::*;
 
-/// Uninitialized
-pub struct Uninitialized;
 
-/// Normal operation mode
-pub struct Normal;
+pub mod mode {
+  use super::*;
 
-/// Power down mode
-pub struct PowerDown;
+  /// Marks an uninitialized [`Scl3300`](../struct.Scl3300.html).
+  #[derive(Debug)]
+  pub struct Uninitialized {
+    pub(crate) _0: PhantomData<()>,
+  }
+
+  /// Marks a [`Scl3300`](../struct.Scl3300.html) in normal operation mode.
+  pub struct Normal {
+    pub(crate) mode: MeasurementMode,
+  }
+
+  /// Marks a [`Scl3300`](../struct.Scl3300.html) in power down mode.
+  #[derive(Debug)]
+  pub struct PowerDown {
+    pub(crate) _0: PhantomData<()>,
+  }
+}
+pub use mode::*;
 
 // SAFTEY: 10 is not 0.
 const MIN_WAIT_TIME_US: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(10) };
@@ -35,64 +47,51 @@ const WAKE_UP_TIME_US: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(1000) };
 // SAFTEY: 1000 is not 0.
 const RESET_TIME_US: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(1000) };
 
+/// An SCL3300 inclinometer.
 #[derive(Debug, Clone)]
-pub struct Scl3300<SPI> {
+pub struct Scl3300<SPI, MODE = Uninitialized> {
   pub(crate) spi: SPI,
-  pub(crate) mode: Option<MeasurementMode>,
-  power_down_mode: bool,
+  pub(crate) mode: MODE,
 }
 
-impl<SPI, E> Scl3300<SPI>
+impl<SPI> Scl3300<SPI> {
+  /// Create a new `Scl3300` with the given `SPI` instance.
+  pub const fn new(spi: SPI) -> Self {
+    Scl3300 { spi, mode: Uninitialized { _0: PhantomData } }
+  }
+}
+
+impl<SPI, E, MODE> Scl3300<SPI, MODE>
 where
   SPI: Transfer<u8, Error = E>,
 {
-  pub const fn new(spi: SPI) -> Self {
-    Self { spi, mode: None, power_down_mode: false }
-  }
-
-  /// Start the inclinometer in the given `mode`.
-  pub fn start_up<D: DelayUs<u32>>(&mut self, delay: &mut D, mode: MeasurementMode) -> Result<Status, Error<E>> {
-    // If mode was previously set, we ware in power down mode.
-    if self.power_down_mode {
-      self.wake_up(delay)?;
-    }
-
+  /// Start the inclinometer in the given [`MeasurementMode`](enum.MeasurementMode.html).
+  fn start_up_inner<D: DelayUs<u32>>(mut self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
+    // Software reset the device.
     self.write(Operation::Reset, delay, Some(RESET_TIME_US))?;
 
+    // Select operation mode.
     self.write(Operation::ChangeMode(mode), delay, None)?;
-    self.mode = Some(mode);
+    // Enable angle outputs.
     self.write(Operation::EnableAngleOutputs, delay, Some(mode.start_up_wait_time_us()))?;
 
+    // Clear status summary.
     self.write(Operation::Read(Output::Status), delay, None)?;
+    // Read status summary.
     self.write(Operation::Read(Output::Status), delay, None)?;
+    // Ensure successful start-up.
+    self.transfer(Operation::Read(Output::Status), delay, None)?;
 
-    let frame = self.transfer(Operation::Read(Output::Status), delay, None)?;
-    Ok(unsafe { Status::from_bits_unchecked(frame.data()) })
+    Ok(Scl3300 { spi: self.spi, mode: Normal { mode } })
   }
 
-  /// Start a read transaction, see [`Reader`](struct.Reader.html) for more information.
-  pub fn read<'d, D: DelayUs<u32>>(&mut self, delay: &'d mut D) -> Reader<'_, 'd, 'static, SPI, E, D> {
-    Reader::new(self, delay)
-  }
-
-  /// Put the inclinometer into power down mode.
-  pub fn power_down<D: DelayUs<u32>>(&mut self, delay: &mut D) -> Result<(), Error<E>> {
-    self.transfer(Operation::PowerDown, delay, None)?;
-    self.power_down_mode = true;
-    Ok(())
-  }
-
-  /// Wake the inclinometer up from power down mode.
-  pub fn wake_up<D: DelayUs<u32>>(&mut self, delay: &mut D) -> Result<(), Error<E>> {
-    self.write(Operation::WakeUp, delay, Some(WAKE_UP_TIME_US))?;
-    Ok(())
-  }
-
+  #[inline]
   fn write<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_us: Option<NonZeroU32>) -> Result<(), Error<E>> {
     self.transfer_inner(operation, delay, wait_us)?;
     Ok(())
   }
 
+  #[inline]
   fn transfer<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_us: Option<NonZeroU32>) -> Result<Frame, Error<E>> {
     let frame = self.transfer_inner(operation, delay, wait_us)?;
     frame.check_crc()?;
@@ -104,6 +103,7 @@ where
     }
   }
 
+  #[inline]
   fn transfer_inner<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_us: Option<NonZeroU32>) -> Result<Frame, Error<E>> {
     let mut frame = operation.to_frame();
     let res = self.spi.transfer(frame.as_bytes_mut());
@@ -114,7 +114,48 @@ where
 
     Ok(frame)
   }
+}
 
+impl<SPI, E> Scl3300<SPI, Uninitialized>
+where
+  SPI: Transfer<u8, Error = E>,
+{
+  /// Start the inclinometer in the given [`MeasurementMode`](enum.MeasurementMode.html).
+  #[inline(always)]
+  pub fn start_up<D: DelayUs<u32>>(self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
+    self.start_up_inner(delay, mode)
+  }
+}
+
+impl<SPI, E> Scl3300<SPI, Normal>
+where
+  SPI: Transfer<u8, Error = E>,
+{
+  /// Start a read transaction, see [`Reader`](struct.Reader.html) for more information.
+  pub fn read<'d, D: DelayUs<u32>>(&mut self, delay: &'d mut D) -> Reader<'_, 'd, 'static, SPI, E, D> {
+    Reader::new(self, delay)
+  }
+
+  /// Put the inclinometer into power down mode.
+  pub fn power_down<D: DelayUs<u32>>(mut self, delay: &mut D) -> Result<Scl3300<SPI, PowerDown>, Error<E>> {
+    self.transfer(Operation::PowerDown, delay, None)?;
+    Ok(Scl3300 { spi: self.spi, mode: PowerDown { _0: PhantomData } })
+  }
+}
+
+impl<SPI, E> Scl3300<SPI, PowerDown>
+where
+  SPI: Transfer<u8, Error = E>,
+{
+  /// Wake the inclinometer up from power down mode in the given [`MeasurementMode`](enum.MeasurementMode.html).
+  #[inline(always)]
+  pub fn wake_up<D: DelayUs<u32>>(mut self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
+    self.write(Operation::WakeUp, delay, Some(WAKE_UP_TIME_US))?;
+    self.start_up_inner(delay, mode)
+  }
+}
+
+impl<SPI, MODE> Scl3300<SPI, MODE> {
   /// Release the contained SPI peripheral.
   pub fn release(self) -> SPI {
     self.spi

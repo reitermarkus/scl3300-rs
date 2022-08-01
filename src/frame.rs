@@ -40,10 +40,6 @@ impl Frame {
     }
   }
 
-  pub fn as_bytes(&self) -> &[u8] {
-    &self.bytes
-  }
-
   pub fn as_bytes_mut(&mut self) -> &mut [u8] {
     &mut self.bytes
   }

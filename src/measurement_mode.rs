@@ -1,5 +1,6 @@
 use core::{num::NonZeroU32, ops::RangeInclusive};
 
+/// A measurement mode.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MeasurementMode {
   /// 1.2g full-scale, 40 Hz 1st order low pass filter
