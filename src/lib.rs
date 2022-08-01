@@ -98,8 +98,8 @@ where
     frame.check_crc()?;
 
     match frame.return_status() {
-      ReturnStatus::StartupInProgress => return Err(Error::Startup),
-      ReturnStatus::Error => return Err(Error::ReturnStatus),
+      ReturnStatus::StartupInProgress => Err(Error::Startup),
+      ReturnStatus::Error => Err(Error::ReturnStatus),
       ReturnStatus::NormalOperation => Ok(frame)
     }
   }
