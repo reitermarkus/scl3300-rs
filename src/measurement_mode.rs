@@ -1,3 +1,5 @@
+use core::{num::NonZeroU32, ops::RangeInclusive};
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MeasurementMode {
   /// 1.2g full-scale, 40 Hz 1st order low pass filter
@@ -12,48 +14,45 @@ pub enum MeasurementMode {
 
 impl Default for MeasurementMode {
   fn default() -> Self {
-    Self::FullScale12
+    Self::new()
   }
 }
 
 impl MeasurementMode {
-  pub const fn sto_thresholds(&self) -> (i16, i16) {
+  pub(crate) const fn new() -> Self {
+    Self::FullScale12
+  }
+
+  pub(crate) const fn self_test_thresholds(&self) -> RangeInclusive<i16> {
     match self {
-      Self::FullScale12 => (-1800, 1800),
-      Self::FullScale24 => (-900, 900),
-      Self::Inclination | Self::InclinationLowNoise => (-3600, 3600),
+      Self::FullScale12 => -1800..=1800,
+      Self::FullScale24 => -900..=900,
+      Self::Inclination | Self::InclinationLowNoise => -3600..=3600,
     }
   }
 
-  pub const fn acceleration_sensitivity(&self) -> (u16, u8) {
+  pub(crate) const fn acceleration_sensitivity(&self) -> u16 {
     match self {
-      Self::FullScale12 => (6000, 105),
-      Self::FullScale24 => (3000, 52),
-      Self::Inclination | Self::InclinationLowNoise => (12000, 52),
+      Self::FullScale12 => 6000,
+      Self::FullScale24 => 3000,
+      Self::Inclination | Self::InclinationLowNoise => 12000,
     }
   }
 
-  pub const fn inclination_sensitivity(&self) -> u8 {
-    182
-  }
-
-  pub const fn wait_time(&self) -> u8 {
+  pub(crate) const fn start_up_wait_time_us(&self) -> NonZeroU32 {
     match self {
-      Self::FullScale12 => 25,
-      Self::FullScale24 => 15,
-      Self::Inclination | Self::InclinationLowNoise => 100,
+      // SAFTEY: 25000 is not 0.
+      MeasurementMode::FullScale12 => unsafe {
+        NonZeroU32::new_unchecked(25_000)
+      },
+      // SAFTEY: 15000 is not 0.
+      MeasurementMode::FullScale24 => unsafe {
+        NonZeroU32::new_unchecked(15_000)
+      },
+      // SAFTEY: 100000 is not 0.
+      MeasurementMode::Inclination | MeasurementMode::InclinationLowNoise => unsafe {
+        NonZeroU32::new_unchecked(100_000)
+      },
     }
-  }
-
-  pub fn convert_acceleration(&self, acc: u16) -> f32 {
-    (acc as i16) as f32 / self.acceleration_sensitivity().0 as f32
-  }
-
-  pub fn convert_angle(&self, ang: u16) -> f32 {
-    (ang as i16) as f32 / (1u16 << 14) as f32 * 90.0
-  }
-
-  pub fn convert_temperature(&self, temp: u16) -> f32 {
-    (temp as i16) as f32 / 18.9 - 273.0
   }
 }
