@@ -75,6 +75,7 @@ impl Acceleration {
     }
   }
 
+  #[cfg(feature = "libm")]
   #[inline]
   fn acc_to_inc(a: f32, b: f32, c: f32) -> u16 {
     use core::f32::consts::FRAC_PI_2;
