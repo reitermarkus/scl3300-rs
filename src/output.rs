@@ -300,7 +300,7 @@ bitflags! {
     const MEMORY_CRC   = 0b00000010000000;
     /// Analog power error
     const APWR         = 0b00000000100000;
-    /// After star-up or reset:
+    /// After start-up or reset:
     /// This flag is set high. No actions needed.
     ///
     /// During normal operation:
