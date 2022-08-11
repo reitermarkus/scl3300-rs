@@ -229,7 +229,7 @@ impl<SPI, E> Scl3300<SPI, PowerDown>
 where
   SPI: Transfer<u8, Error = E>,
 {
-  /// Wake the inclinometer up from power down mode in the given [`MeasurementMode`](enum.MeasurementMode.html).
+  /// Wake the inclinometer up from power down mode and switch to the given [`MeasurementMode`](enum.MeasurementMode.html).
   #[inline(always)]
   pub fn wake_up<D: DelayUs<u32>>(mut self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
     self.write(Operation::WakeUp, delay, Some(WAKE_UP_TIME_US))?;
