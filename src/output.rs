@@ -214,7 +214,7 @@ impl ComponentId {
 
   /// Check if the component ID is equal to the expected `WHOAMI` value.
   #[inline]
-  pub fn is_whoami(&self) -> bool {
+  pub fn is_correct(&self) -> bool {
     self.id == Self::WHOAMI
   }
 }

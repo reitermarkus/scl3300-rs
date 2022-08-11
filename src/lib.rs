@@ -43,9 +43,9 @@
 //! // Read the component ID.
 //! let mut id = ComponentId::new();
 //! inclinometer.read(&mut delay)
-//!   .whoami(&mut id)
+//!   .component_id(&mut id)
 //!   .finish()?;
-//! assert!(id.is_whoami());
+//! assert!(id.is_correct());
 //!
 //! // Read acceleration, inclination and temperature.
 //! let mut acc = Acceleration::new();

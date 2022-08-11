@@ -136,8 +136,8 @@ where
     self.read(Output::SelfTest, Some(OutputVal::U16(&mut st.sto)))
   }
 
-  /// Read the `WHOAMI` value.
-  pub fn whoami<'r>(self, w: &'r mut ComponentId) -> Reader<'s, 'd, 'r, SPI, E, D> {
+  /// Read the component ID.
+  pub fn component_id<'r>(self, w: &'r mut ComponentId) -> Reader<'s, 'd, 'r, SPI, E, D> {
     self.switch_to_bank(Bank::Zero)
       .read(Output::WhoAmI, Some(OutputVal::WhoAmI(&mut w.id)))
   }
