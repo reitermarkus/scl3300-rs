@@ -1,5 +1,87 @@
 #![cfg_attr(not(test), no_std)]
 
+//! This is a driver for SCL3300 inclinometers, implemented using platform-agnostic
+//! [`embedded-hal`](https://docs.rs/embedded-hal/latest/embedded_hal/) traits.
+//!
+//! # Usage
+//!
+//! ```rust
+//! # fn main() -> Result<(), scl3300::Error<embedded_hal_mock::MockError>> {
+//! # use embedded_hal_mock::{spi::{Mock as SpiMock, Transaction as SpiTransaction}, delay::MockNoop as Delay};
+//! # let spi = SpiMock::new(&[
+//! #   SpiTransaction::transfer(vec![0xB4, 0x00, 0x20, 0x98], vec![3, 0, 0, 125]), // Reset.
+//! #   SpiTransaction::transfer(vec![0xB4, 0x00, 0x02, 0x25], vec![3, 0, 0, 125]), // Change to inclination mode.
+//! #   SpiTransaction::transfer(vec![0xB0, 0x00, 0x1F, 0x6F], vec![183, 0, 2, 169]), // Enable angle outputs.
+//! #   SpiTransaction::transfer(vec![0x18, 0x00, 0x00, 0xE5], vec![179, 0, 31, 227]), // Read status.
+//! #   SpiTransaction::transfer(vec![0x18, 0x00, 0x00, 0xE5], vec![27, 0, 18, 158]), // Read status.
+//! #   SpiTransaction::transfer(vec![0x18, 0x00, 0x00, 0xE5], vec![25, 0, 18, 157]), // Read status.
+//! #
+//! #   SpiTransaction::transfer(vec![0x40, 0x00, 0x00, 0x91], vec![25, 0, 0, 106]), // Read WHOAMI.
+//! #   SpiTransaction::transfer(vec![0xFC, 0x00, 0x00, 0x73], vec![65, 0, 193, 54]), // Switch to bank 0.
+//! #
+//! #   SpiTransaction::transfer(vec![0x04, 0x00, 0x00, 0xF7], vec![25, 0, 0, 106]), // Read X-axis acceleration.
+//! #   SpiTransaction::transfer(vec![0x08, 0x00, 0x00, 0xFD], vec![5, 255, 230, 197]), // Read Y-axis acceleration.
+//! #   SpiTransaction::transfer(vec![0x0C, 0x00, 0x00, 0xFB], vec![9, 0, 141, 213]), // Read Z-axis acceleration.
+//! #
+//! #   SpiTransaction::transfer(vec![0x24, 0x00, 0x00, 0xC7], vec![13, 46, 112, 183]), // Read X-axis inclination.
+//! #   SpiTransaction::transfer(vec![0x28, 0x00, 0x00, 0xCD], vec![37, 255, 233, 78]), // Read Y-axis inclination.
+//! #   SpiTransaction::transfer(vec![0x2C, 0x00, 0x00, 0xCB], vec![41, 0, 123, 212]), // Read Z-axis inclination.
+//! #
+//! #   SpiTransaction::transfer(vec![0x14, 0x00, 0x00, 0xEF], vec![45, 63, 129, 29]), // Read temperature.
+//! #   SpiTransaction::transfer(vec![0xFC, 0x00, 0x00, 0x73], vec![21, 22, 20, 216]), // Switch to bank 0.
+//! #
+//! #   SpiTransaction::transfer(vec![0xB4, 0x00, 0x04, 0x6B], vec![253, 0, 0, 252]), // Power down.
+//! # ]);
+//! # let mut delay = Delay;
+//! use scl3300::{Scl3300, Acceleration, ComponentId, Inclination, MeasurementMode, Temperature};
+//!
+//! let inclinometer = Scl3300::new(spi);
+//!
+//! // Start the inclinometer and switch to inclination mode.
+//! let mut inclinometer = inclinometer.start_up(&mut delay, MeasurementMode::Inclination)?;
+//!
+//! // Read the component ID.
+//! let mut id = ComponentId::new();
+//! inclinometer.read(&mut delay)
+//!   .whoami(&mut id)
+//!   .finish()?;
+//! assert!(id.is_whoami());
+//!
+//! // Read acceleration, inclination and temperature.
+//! let mut acc = Acceleration::new();
+//! let mut inc = Inclination::new();
+//! let mut temp = Temperature::new();
+//! inclinometer.read(&mut delay)
+//!   .acceleration(&mut acc)
+//!   .inclination(&mut inc)
+//!   .temperature(&mut temp)
+//!   .finish()?;
+//!
+//! # assert_eq!(acc.x_g(), -0.0021666666);
+//! # assert_eq!(acc.y_g(), 0.01175);
+//! # assert_eq!(acc.z_g(), 0.9906667);
+//! println!("Acceleration: {}g, {}g, {}g", acc.x_g(), acc.y_g(), acc.z_g());
+//! #
+//! # assert_eq!(inc.x_degrees(), 359.87366);
+//! # assert_eq!(inc.y_degrees(), 0.6756592);
+//! # assert_eq!(inc.z_degrees(), 89.30237);
+//! println!("Inclination: {}°, {}°, {}°", inc.x_degrees(), inc.y_degrees(), inc.z_degrees());
+//! #
+//! # assert_eq!(temp.degrees_celsius(), 26.047638);
+//! println!("Temperature: {}°C", temp.degrees_celsius());
+//!
+//! // Switch to power-down mode.
+//! let inclinometer = inclinometer.power_down(&mut delay)?;
+//!
+//! // Release the SPI peripheral again.
+//! let spi = inclinometer.release();
+//! # let mut spi = spi;
+//! # spi.done();
+//! drop(spi);
+//! # Ok(())
+//! # }
+//! ```
+
 use core::{num::NonZeroU32, marker::PhantomData};
 
 use embedded_hal::blocking::{delay::DelayUs, spi::{Transfer}};
