@@ -1,7 +1,7 @@
 #![cfg_attr(not(test), no_std)]
 
-//! This is a driver for SCL3300 inclinometers, implemented using platform-agnostic
-//! [`embedded-hal`](https://docs.rs/embedded-hal/latest/embedded_hal/) traits.
+//! This is a driver for [SCL3300](https://www.murata.com/en-global/products/sensor/inclinometer/overview/lineup/scl3300)
+//! inclinometers, implemented using platform-agnostic [`embedded-hal`](https://docs.rs/embedded-hal/latest/embedded_hal/) traits.
 //!
 //! # Usage
 //!
@@ -110,6 +110,7 @@ pub mod mode {
   }
 
   /// Marks a [`Scl3300`](../struct.Scl3300.html) in normal operation mode.
+  #[derive(Debug)]
   pub struct Normal {
     pub(crate) mode: MeasurementMode,
   }
@@ -203,6 +204,8 @@ where
   SPI: Transfer<u8, Error = E>,
 {
   /// Start the inclinometer in the given [`MeasurementMode`](enum.MeasurementMode.html).
+  ///
+  /// When the inclinometer is in power down mode, use [`wake_up`](Scl3300::wake_up) instead.
   #[inline(always)]
   pub fn start_up<D: DelayUs<u32>>(self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
     self.start_up_inner(delay, mode)

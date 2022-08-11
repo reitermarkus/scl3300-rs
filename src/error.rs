@@ -1,4 +1,4 @@
-/// An error.
+/// An SCL3300 error.
 #[derive(Debug)]
 pub enum Error<E> {
   /// Startup error

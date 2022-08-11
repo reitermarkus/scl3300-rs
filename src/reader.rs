@@ -18,7 +18,14 @@ enum OutputVal<'v> {
   WhoAmI(&'v mut u8),
 }
 
-/// Read measurement and status values.
+/// Read measurements and status values.
+///
+/// This `struct` is returned by the [`read`](Scl3300::read) method on [`Scl3300`](Scl3300).
+///
+/// The SCL3300 uses an off-frame protocal for reading, meaning the response of a given
+/// operation is returned by the next operation. This struct encompasses this fact by
+/// combining multiple read operations and sending a single final dummy operation to get
+/// the last response when the [`finish`](Reader::finish) method is called.
 #[must_use = "`.finish()` must be called to read the last value"]
 pub struct Reader<'s, 'd, 'v, SPI, E, D> {
   scl: &'s mut Scl3300<SPI, Normal>,
@@ -33,6 +40,7 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
+  #[inline]
   pub(crate) fn new(scl: &'s mut Scl3300<SPI, Normal>, delay: &'d mut D) -> Self {
     Reader { scl, delay, previous_value: None, bank: Bank::Zero, error: Ok(()) }
   }
@@ -101,7 +109,7 @@ where
     }
   }
 
-  /// Read measured acceleration.
+  /// Read the measured acceleration.
   pub fn acceleration<'r>(self, acc: &'r mut Acceleration) -> Reader<'s, 'd, 'r, SPI, E, D> {
     acc.mode = self.scl.mode.mode;
     self.read(Output::Acceleration(Axis::X), Some(OutputVal::U16(&mut acc.x)))
@@ -109,7 +117,7 @@ where
       .read(Output::Acceleration(Axis::Z), Some(OutputVal::U16(&mut acc.z)))
   }
 
-  /// Read measured inclination.
+  /// Read the measured inclination.
   pub fn inclination<'r>(self, inc: &'r mut Inclination) -> Reader<'s, 'd, 'r, SPI, E, D> {
     self.switch_to_bank(Bank::Zero)
       .read(Output::Angle(Axis::X), Some(OutputVal::U16(&mut inc.x)))
@@ -117,48 +125,49 @@ where
       .read(Output::Angle(Axis::Z), Some(OutputVal::U16(&mut inc.z)))
   }
 
-  /// Read measured temperature.
+  /// Read the measured temperature.
   pub fn temperature<'r>(self, t: &'r mut Temperature) -> Reader<'s, 'd, 'r, SPI, E, D> {
     self.read(Output::Temperature, Some(OutputVal::U16(&mut t.temp)))
   }
 
-  /// Read self-test output.
+  /// Read the self-test output.
   pub fn self_test<'r>(self, st: &'r mut SelfTest) -> Reader<'s, 'd, 'r, SPI, E, D> {
     st.mode = self.scl.mode.mode;
     self.read(Output::SelfTest, Some(OutputVal::U16(&mut st.sto)))
   }
 
-  /// Read `WHOAMI` output.
+  /// Read the `WHOAMI` value.
   pub fn whoami<'r>(self, w: &'r mut ComponentId) -> Reader<'s, 'd, 'r, SPI, E, D> {
     self.switch_to_bank(Bank::Zero)
       .read(Output::WhoAmI, Some(OutputVal::WhoAmI(&mut w.id)))
   }
 
-  /// Read serial number.
+  /// Read the serial number.
   pub fn serial<'r>(self, s: &'r mut Serial) -> Reader<'s, 'd, 'r, SPI, E, D> {
     self.switch_to_bank(Bank::One)
       .read(Output::Serial1, Some(OutputVal::U16(&mut s.part1)))
       .read(Output::Serial2, Some(OutputVal::U16(&mut s.part2)))
   }
 
-  /// Read `WHOAMI` output.
+  /// Read the `STATUS` register.
   pub fn status<'r>(self, s: &'r mut Status) -> Reader<'s, 'd, 'r, SPI, E, D> {
     self.switch_to_bank(Bank::Zero)
       .read(Output::Status, Some(OutputVal::Status(s)))
   }
 
-  /// Read `WHOAMI` output.
+  /// Read the `ERROR1` register.
   pub fn error1<'r>(self, e: &'r mut Error1) -> Reader<'s, 'd, 'r, SPI, E, D> {
     self.switch_to_bank(Bank::Zero)
       .read(Output::Error1, Some(OutputVal::Error1(e)))
   }
 
-  /// Read `WHOAMI` output.
+  /// Read the `ERROR2` register.
   pub fn error2<'r>(self, e: &'r mut Error2) -> Reader<'s, 'd, 'r, SPI, E, D> {
     self.switch_to_bank(Bank::Zero)
       .read(Output::Error2, Some(OutputVal::Error2(e)))
   }
 
+  /// Finish the read transaction.
   pub fn finish(mut self) -> Result<(), Error<E>> {
     if let Err(err) = self.error {
       return Err(err)

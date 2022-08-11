@@ -3,13 +3,17 @@ use core::{num::NonZeroU32, ops::RangeInclusive};
 /// A measurement mode.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MeasurementMode {
-  /// 1.2g full-scale, 40 Hz 1st order low pass filter
+  /// 1.2g full-scale,
+  /// 40 Hz first-order low-pass filter
   FullScale12,
-  /// 2.4g full-scale, 70 Hz 1st order low pass filter
+  /// 2.4g full-scale,
+  /// 70 Hz first-order low-pass filter
   FullScale24,
-  /// Inclination mode, 10 Hz 1st order low pass filter
+  /// Inclination mode,
+  /// 10 Hz first-order low-pass filter
   Inclination,
-  /// Inclination mode, 10 Hz 1st order low pass filter, Low noise mode
+  /// Inclination (low noise) mode,
+  /// 10 Hz first-order low-pass filter,
   InclinationLowNoise,
 }
 
