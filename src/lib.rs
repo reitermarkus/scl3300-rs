@@ -39,21 +39,11 @@
 //! let mut inclinometer = inclinometer.start_up(&mut delay, MeasurementMode::Inclination)?;
 //!
 //! // Read the component ID.
-//! let mut id = ComponentId::new();
-//! inclinometer.read(&mut delay)
-//!   .component_id(&mut id)
-//!   .finish()?;
-//! assert!(id.is_correct());
+//! let id: ComponentId = inclinometer.read(&mut delay)?;
+//! assert_eq!(id, ComponentId::WHOAMI);
 //!
 //! // Read acceleration, inclination and temperature.
-//! let mut acc = Acceleration::new();
-//! let mut inc = Inclination::new();
-//! let mut temp = Temperature::new();
-//! inclinometer.read(&mut delay)
-//!   .acceleration(&mut acc)
-//!   .inclination(&mut inc)
-//!   .temperature(&mut temp)
-//!   .finish()?;
+//! let (acc, inc, temp): (Acceleration, Inclination, Temperature) = inclinometer.read(&mut delay)?;
 //!
 //! # assert_eq!(acc.x_g(), -0.0021666666);
 //! # assert_eq!(acc.y_g(), 0.01175);
@@ -79,10 +69,9 @@
 //! # Ok(())
 //! # }
 //! ```
-#![no_std]
-
-#[cfg(test)]
-extern crate alloc;
+#![cfg_attr(not(test), no_std)]
+#![warn(missing_debug_implementations)]
+#![warn(missing_docs)]
 
 use core::{num::NonZeroU32, marker::PhantomData};
 
@@ -98,26 +87,26 @@ mod measurement_mode;
 pub use measurement_mode::*;
 mod operation;
 use operation::*;
-mod reader;
-pub use reader::*;
+mod off_frame_read;
+pub use off_frame_read::*;
 
-
+/// [`Scl3300`](crate::Scl3300) operation modes.
 pub mod mode {
   use super::*;
 
-  /// Marks an uninitialized [`Scl3300`](../struct.Scl3300.html).
+  /// Marker type for an uninitialized [`Scl3300`](crate::Scl3300).
   #[derive(Debug)]
   pub struct Uninitialized {
     pub(crate) _0: PhantomData<()>,
   }
 
-  /// Marks a [`Scl3300`](../struct.Scl3300.html) in normal operation mode.
+  /// Marker type for a [`Scl3300`](crate::Scl3300) in normal operation mode.
   #[derive(Debug)]
   pub struct Normal {
     pub(crate) mode: MeasurementMode,
   }
 
-  /// Marks a [`Scl3300`](../struct.Scl3300.html) in power down mode.
+  /// Marker type for a [`Scl3300`](crate::Scl3300) in power down mode.
   #[derive(Debug)]
   pub struct PowerDown {
     pub(crate) _0: PhantomData<()>,
@@ -218,9 +207,35 @@ impl<SPI, E> Scl3300<SPI, Normal>
 where
   SPI: Transfer<u8, Error = E>,
 {
-  /// Start a read transaction, see [`Reader`](struct.Reader.html) for more information.
-  pub fn read<'d, D: DelayUs<u32>>(&mut self, delay: &'d mut D) -> Reader<'_, 'd, 'static, SPI, E, D> {
-    Reader::new(self, delay)
+  /// Read a value.
+  ///
+  /// The following outputs are supported:
+  ///
+  /// - [`Acceleration`](output::Acceleration)
+  /// - [`Inclination`](output::Inclination)
+  /// - [`Temperature`](output::Temperature)
+  /// - [`SelfTest`](output::SelfTest)
+  /// - [`ComponentId`](output::ComponentId)
+  /// - [`Serial`](output::Serial)
+  /// - [`Status`](output::Status)
+  /// - [`Error1`](output::Error1)
+  /// - [`Error2`](output::Error2)
+  ///
+  /// Additinally, multiple outputs can be read by specifying a tuple.
+  pub fn read<V, D>(&mut self, delay: &mut D) -> Result<V, Error<E>>
+  where
+    D: DelayUs<u32>,
+    V: OffFrameRead<SPI, D, E>,
+  {
+    let mut current_bank = Bank::Zero;
+
+    let (_, mut partial) = V::start_read(self, delay, &mut current_bank)?;
+
+    let last_value = self.transfer(Operation::SwitchBank(Bank::Zero), delay, None)?.data();
+
+    partial.finish_read(last_value);
+
+    Ok(partial)
   }
 
   /// Put the inclinometer into power down mode.

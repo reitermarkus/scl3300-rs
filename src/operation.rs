@@ -1,22 +1,21 @@
 use crate::{Frame, MeasurementMode};
 
-#[derive(Debug, Clone, Copy)]
-pub enum Axis {
-  X,
-  Y,
-  Z,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Bank {
+  /// Bank 0
   Zero,
+  /// Bank 1
   One,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Output {
-  Acceleration(Axis),
-  Angle(Axis),
+  AccelerationX,
+  AccelerationY,
+  AccelerationZ,
+  AngleX,
+  AngleY,
+  AngleZ,
   Temperature,
   SelfTest,
   Status,
@@ -33,6 +32,7 @@ pub enum Output {
   CurrentBank,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Operation {
   Read(Output),
   EnableAngleOutputs,
@@ -44,22 +44,21 @@ pub enum Operation {
 }
 
 impl Operation {
-  pub(crate) const fn to_frame(&self) -> Frame {
+  pub(crate) const fn to_frame(self) -> Frame {
     use Operation::*;
-    use Axis::*;
     use Output::*;
     use MeasurementMode::*;
     use Bank::*;
 
     let frame: u32 = match self {
-      Read(Acceleration(X))           => 0x040000F7,
-      Read(Acceleration(Y))           => 0x080000FD,
-      Read(Acceleration(Z))           => 0x0C0000FB,
+      Read(AccelerationX)             => 0x040000F7,
+      Read(AccelerationY)             => 0x080000FD,
+      Read(AccelerationZ)             => 0x0C0000FB,
       Read(SelfTest)                  => 0x100000E9,
       EnableAngleOutputs              => 0xB0001F6F,
-      Read(Angle(X))                  => 0x240000C7,
-      Read(Angle(Y))                  => 0x280000CD,
-      Read(Angle(Z))                  => 0x2C0000CB,
+      Read(AngleX)                    => 0x240000C7,
+      Read(AngleY)                    => 0x280000CD,
+      Read(AngleZ)                    => 0x2C0000CB,
       Read(Temperature)               => 0x140000EF,
       Read(Status)                    => 0x180000E5,
       Read(Error1)                    => 0x1C0000E3,

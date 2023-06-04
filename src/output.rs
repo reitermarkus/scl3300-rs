@@ -1,3 +1,5 @@
+//! This module includes all types which can be read using [`Scl3300::read`](crate::Scl3300::read).
+
 use core::fmt;
 
 use bitflags::bitflags;
@@ -14,11 +16,6 @@ pub struct Acceleration {
 }
 
 impl Acceleration {
-  /// Create a new [`Acceleration`](struct.Acceleration.html) for storing a measurement.
-  pub const fn new() -> Self {
-    Self { x: 0, y: 0, z: 0, mode: MeasurementMode::new() }
-  }
-
   /// Get the raw acceleration value in the X-direction.
   #[inline(always)]
   pub fn x_raw(&self) -> u16 {
@@ -96,11 +93,6 @@ pub struct Inclination {
 impl Inclination {
   pub(crate) const FACTOR: f32 = (1 << 14) as f32;
 
-  /// Create a new [`Inclination`](struct.Inclination.html) for storing a measurement.
-  pub const fn new() -> Self {
-    Self { x: 0, y: 0, z: 0 }
-  }
-
   /// Get the raw inclination value on the X-axis.
   #[inline(always)]
   pub fn x_raw(&self) -> u16 {
@@ -150,11 +142,6 @@ pub struct Temperature {
 }
 
 impl Temperature {
-  /// Create a new [`Temperature`](struct.Temperature.html) for storing a measurement.
-  pub const fn new() -> Self {
-    Self { temp: 0 }
-  }
-
   /// Get the raw temperature value.
   #[inline(always)]
   pub fn raw(&self) -> u16 {
@@ -176,11 +163,6 @@ pub struct SelfTest {
 }
 
 impl SelfTest {
-  /// Create a new [`SelfTest`](struct.SelfTest.html) for storing a reading.
-  pub const fn new() -> Self {
-    Self { sto: 0, mode: MeasurementMode::new() }
-  }
-
   /// Get the raw self-test value.
   pub fn raw(&self) -> u16 {
     self.sto
@@ -199,12 +181,8 @@ pub struct ComponentId {
 }
 
 impl ComponentId {
-  const WHOAMI: u8 = 0xC1;
-
-  /// Create a new [`ComponentId`](struct.ComponentId.html) for storing a reading.
-  pub const fn new() -> Self {
-    Self { id: 0 }
-  }
+  /// The expected component ID.
+  pub const WHOAMI: Self = Self { id: 0xC1 };
 
   /// Get the raw component ID.
   #[inline(always)]
@@ -215,7 +193,7 @@ impl ComponentId {
   /// Check if the component ID is equal to the expected `WHOAMI` value.
   #[inline]
   pub fn is_correct(&self) -> bool {
-    self.id == Self::WHOAMI
+    *self == Self::WHOAMI
   }
 }
 
@@ -227,19 +205,17 @@ pub struct Serial {
 }
 
 impl Serial {
-  /// Create a new [`Serial`](struct.Serial.html) for storing a reading.
-  pub const fn new() -> Self {
-    Self { part1: 0, part2: 0 }
+  /// Get the serial number as an integer.
+  pub const fn to_u32(&self) -> u32 {
+    let [b0, b1] = self.part2.to_be_bytes();
+    let [b2, b3] = self.part1.to_be_bytes();
+    u32::from_be_bytes([b0, b1, b2, b3])
   }
 }
 
 impl fmt::Display for Serial {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let [b0, b1] = self.part2.to_be_bytes();
-    let [b2, b3] = self.part1.to_be_bytes();
-    let serial = u32::from_be_bytes([b0, b1, b2, b3]);
-
-    write!(f, "{:010}B33", serial)
+    write!(f, "{:010}B33", self.to_u32())
   }
 }
 
@@ -320,8 +296,6 @@ bitflags! {
 
 #[cfg(test)]
 mod tests {
-  use alloc::string::ToString;
-
   use super::*;
 
   #[test]
