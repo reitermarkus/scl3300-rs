@@ -9,5 +9,5 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-scl3300 = "0.1"
+scl3300 = "0.3"
 ```
