@@ -73,9 +73,9 @@
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
 
-use core::{num::NonZeroU32, marker::PhantomData};
+use core::{marker::PhantomData, num::NonZeroU32};
 
-use embedded_hal::blocking::{delay::DelayUs, spi::{Transfer}};
+use embedded_hal::blocking::{delay::DelayUs, spi::Transfer};
 
 mod error;
 pub use error::*;
@@ -140,7 +140,11 @@ where
   SPI: Transfer<u8, Error = E>,
 {
   /// Start the inclinometer in the given [`MeasurementMode`](enum.MeasurementMode.html).
-  fn start_up_inner<D: DelayUs<u32>>(mut self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
+  fn start_up_inner<D: DelayUs<u32>>(
+    mut self,
+    delay: &mut D,
+    mode: MeasurementMode,
+  ) -> Result<Scl3300<SPI, Normal>, Error<E>> {
     // Software reset the device.
     self.write(Operation::Reset, delay, Some(RESET_TIME_US))?;
 
@@ -160,25 +164,40 @@ where
   }
 
   #[inline]
-  fn write<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_us: Option<NonZeroU32>) -> Result<(), Error<E>> {
+  fn write<D: DelayUs<u32>>(
+    &mut self,
+    operation: Operation,
+    delay: &mut D,
+    wait_us: Option<NonZeroU32>,
+  ) -> Result<(), Error<E>> {
     self.transfer_inner(operation, delay, wait_us)?;
     Ok(())
   }
 
   #[inline]
-  fn transfer<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_us: Option<NonZeroU32>) -> Result<Frame, Error<E>> {
+  fn transfer<D: DelayUs<u32>>(
+    &mut self,
+    operation: Operation,
+    delay: &mut D,
+    wait_us: Option<NonZeroU32>,
+  ) -> Result<Frame, Error<E>> {
     let frame = self.transfer_inner(operation, delay, wait_us)?;
     frame.check_crc()?;
 
     match frame.return_status() {
       ReturnStatus::StartupInProgress => Err(Error::Startup),
       ReturnStatus::Error => Err(Error::ReturnStatus),
-      ReturnStatus::NormalOperation => Ok(frame)
+      ReturnStatus::NormalOperation => Ok(frame),
     }
   }
 
   #[inline]
-  fn transfer_inner<D: DelayUs<u32>>(&mut self, operation: Operation, delay: &mut D, wait_us: Option<NonZeroU32>) -> Result<Frame, Error<E>> {
+  fn transfer_inner<D: DelayUs<u32>>(
+    &mut self,
+    operation: Operation,
+    delay: &mut D,
+    wait_us: Option<NonZeroU32>,
+  ) -> Result<Frame, Error<E>> {
     let mut frame = operation.to_frame();
     let res = self.spi.transfer(frame.as_bytes_mut());
     delay.delay_us(wait_us.unwrap_or(MIN_WAIT_TIME_US).get());
@@ -198,7 +217,11 @@ where
   ///
   /// When the inclinometer is in power down mode, use [`wake_up`](Scl3300::wake_up) instead.
   #[inline(always)]
-  pub fn start_up<D: DelayUs<u32>>(self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
+  pub fn start_up<D: DelayUs<u32>>(
+    self,
+    delay: &mut D,
+    mode: MeasurementMode,
+  ) -> Result<Scl3300<SPI, Normal>, Error<E>> {
     self.start_up_inner(delay, mode)
   }
 }
@@ -251,7 +274,11 @@ where
 {
   /// Wake the inclinometer up from power down mode and switch to the given [`MeasurementMode`](enum.MeasurementMode.html).
   #[inline(always)]
-  pub fn wake_up<D: DelayUs<u32>>(mut self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
+  pub fn wake_up<D: DelayUs<u32>>(
+    mut self,
+    delay: &mut D,
+    mode: MeasurementMode,
+  ) -> Result<Scl3300<SPI, Normal>, Error<E>> {
     self.write(Operation::WakeUp, delay, Some(WAKE_UP_TIME_US))?;
     self.start_up_inner(delay, mode)
   }

@@ -45,11 +45,12 @@ pub enum Operation {
 
 impl Operation {
   pub(crate) const fn to_frame(self) -> Frame {
+    use Bank::*;
+    use MeasurementMode::*;
     use Operation::*;
     use Output::*;
-    use MeasurementMode::*;
-    use Bank::*;
 
+    #[rustfmt::skip]
     let frame: u32 = match self {
       Read(AccelerationX)             => 0x040000F7,
       Read(AccelerationY)             => 0x080000FD,

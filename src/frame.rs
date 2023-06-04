@@ -71,19 +71,16 @@ mod tests {
   #[test]
   fn test_crc8() {
     let examples = [
-      [183, 0, 2, 169],
-      [25, 0, 18, 157],
-      [25, 0, 0, 106],
-      [27, 0, 18, 158],
-      [24, 0, 0, 229],
-      [183, 0, 0, 147],
+      ([183, 0, 2], 169),
+      ([25, 0, 18], 157),
+      ([25, 0, 0], 106),
+      ([27, 0, 18], 158),
+      ([24, 0, 0], 229),
+      ([183, 0, 0], 147),
     ];
 
-    for example in examples {
-      let data = [example[0], example[1], example[2]];
-      let crc = example[3];
-
-      assert_eq!(crc8(data), crc, "CRC check failed for {:?}", example);
+    for (data, crc) in examples {
+      assert_eq!(crc8(data), crc);
     }
   }
 }

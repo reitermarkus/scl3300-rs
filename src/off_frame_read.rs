@@ -1,19 +1,21 @@
 use embedded_hal::blocking::{delay::DelayUs, spi::Transfer};
 
 use crate::{
-  Scl3300, Normal,
-  Error,
-  operation::{Operation, Output, Bank},
-  output::{
-    Acceleration, Inclination, Temperature, SelfTest, ComponentId, Serial,
-    Status, Error1, Error2,
-  },
+  operation::{Bank, Operation, Output},
+  output::{Acceleration, ComponentId, Error1, Error2, Inclination, SelfTest, Serial, Status, Temperature},
+  Error, Normal, Scl3300,
 };
 
-fn transfer_with_bank<SPI, D, E>(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, current_bank: &mut Bank, required_bank: Bank, operation: Operation) -> Result<u16, Error<E>>
+fn transfer_with_bank<SPI, D, E>(
+  scl: &mut Scl3300<SPI, Normal>,
+  delay: &mut D,
+  current_bank: &mut Bank,
+  required_bank: Bank,
+  operation: Operation,
+) -> Result<u16, Error<E>>
 where
-SPI: Transfer<u8, Error = E>,
-D: DelayUs<u32>,
+  SPI: Transfer<u8, Error = E>,
+  D: DelayUs<u32>,
 {
   let mut last_value1 = None;
 
@@ -34,7 +36,11 @@ where
   D: DelayUs<u32>,
 {
   /// Start an off-frame read.
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, current_bank: &mut Bank) -> Result<(u16, Self), Error<E>>;
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>>;
 
   /// Finish an off-frame read.
   fn finish_read(&mut self, last_value: u16);
@@ -45,7 +51,11 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, _current_bank: &mut Bank) -> Result<(u16, Self), Error<E>> {
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    _current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>> {
     let mut acc = Acceleration { x: 0, y: 0, z: 0, mode: scl.mode.mode };
 
     let last_value = scl.transfer(Operation::Read(Output::AccelerationX), delay, None)?.data();
@@ -64,7 +74,11 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, current_bank: &mut Bank) -> Result<(u16, Self), Error<E>> {
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>> {
     let mut inc = Inclination { x: 0, y: 0, z: 0 };
     let last_value = transfer_with_bank(scl, delay, current_bank, Bank::Zero, Operation::Read(Output::AngleX))?;
     inc.x = scl.transfer(Operation::Read(Output::AngleY), delay, None)?.data();
@@ -82,7 +96,11 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, _current_bank: &mut Bank) -> Result<(u16, Self), Error<E>> {
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    _current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>> {
     let temp = Temperature { temp: 0 };
     let last_value = scl.transfer(Operation::Read(Output::Temperature), delay, None)?.data();
     Ok((last_value, temp))
@@ -98,7 +116,11 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, _current_bank: &mut Bank) -> Result<(u16, Self), Error<E>> {
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    _current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>> {
     let st = SelfTest { sto: 0, mode: scl.mode.mode };
     let last_value = scl.transfer(Operation::Read(Output::SelfTest), delay, None)?.data();
     Ok((last_value, st))
@@ -114,7 +136,11 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, current_bank: &mut Bank) -> Result<(u16, Self), Error<E>> {
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>> {
     let id = ComponentId { id: 0 };
     let last_value = transfer_with_bank(scl, delay, current_bank, Bank::Zero, Operation::Read(Output::WhoAmI))?;
     Ok((last_value, id))
@@ -130,7 +156,11 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, current_bank: &mut Bank) -> Result<(u16, Self), Error<E>> {
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>> {
     let mut serial = Serial { part1: 0, part2: 0 };
     let last_value = transfer_with_bank(scl, delay, current_bank, Bank::One, Operation::Read(Output::Serial1))?;
     serial.part1 = scl.transfer(Operation::Read(Output::Serial2), delay, None)?.data();
@@ -147,7 +177,11 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, current_bank: &mut Bank) -> Result<(u16, Self), Error<E>> {
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>> {
     let status = Self::from_bits_retain(0);
     let last_value = transfer_with_bank(scl, delay, current_bank, Bank::Zero, Operation::Read(Output::Status))?;
     Ok((last_value, status))
@@ -163,7 +197,11 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, current_bank: &mut Bank) -> Result<(u16, Self), Error<E>> {
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>> {
     let status = Self::from_bits_retain(0);
     let last_value = transfer_with_bank(scl, delay, current_bank, Bank::Zero, Operation::Read(Output::Error1))?;
     Ok((last_value, status))
@@ -179,7 +217,11 @@ where
   SPI: Transfer<u8, Error = E>,
   D: DelayUs<u32>,
 {
-  fn start_read(scl: &mut Scl3300<SPI, Normal>, delay: &mut D, current_bank: &mut Bank) -> Result<(u16, Self), Error<E>> {
+  fn start_read(
+    scl: &mut Scl3300<SPI, Normal>,
+    delay: &mut D,
+    current_bank: &mut Bank,
+  ) -> Result<(u16, Self), Error<E>> {
     let status = Self::from_bits_retain(0);
     let last_value = transfer_with_bank(scl, delay, current_bank, Bank::Zero, Operation::Read(Output::Error2))?;
     Ok((last_value, status))

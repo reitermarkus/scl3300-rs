@@ -47,13 +47,9 @@ impl MeasurementMode {
   pub(crate) const fn start_up_wait_time_us(&self) -> NonZeroU32 {
     match self {
       // SAFTEY: 25000 is not 0.
-      MeasurementMode::FullScale12 => unsafe {
-        NonZeroU32::new_unchecked(25_000)
-      },
+      MeasurementMode::FullScale12 => unsafe { NonZeroU32::new_unchecked(25_000) },
       // SAFTEY: 15000 is not 0.
-      MeasurementMode::FullScale24 => unsafe {
-        NonZeroU32::new_unchecked(15_000)
-      },
+      MeasurementMode::FullScale24 => unsafe { NonZeroU32::new_unchecked(15_000) },
       // SAFTEY: 100000 is not 0.
       MeasurementMode::Inclination | MeasurementMode::InclinationLowNoise => unsafe {
         NonZeroU32::new_unchecked(100_000)
