@@ -13,7 +13,7 @@ categories = ["embedded", "hardware-support", "no-std"]
 
 [dependencies]
 bitflags = "2.4"
-embedded-hal = "0.2"
+embedded-hal = "1.0"
 libm = { version = "0.2", optional = true }
 
 [features]
