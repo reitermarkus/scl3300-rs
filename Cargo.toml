@@ -20,7 +20,4 @@ libm = { version = "0.2", optional = true }
 default = ["libm"]
 
 [dev-dependencies]
-embedded-hal-mock = { version = "0.10.0" }
-
-[patch.crates-io]
-embedded-hal-mock = { git = "https://github.com/dbrgn/embedded-hal-mock" }
+embedded-hal-mock = "0.10"
