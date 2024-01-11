@@ -1,4 +1,4 @@
-use embedded_hal::{delay::DelayNs, spi::SpiBus};
+use embedded_hal::{delay::DelayNs, spi::SpiDevice};
 
 use crate::{
   operation::{Bank, Operation, Output},
@@ -14,7 +14,7 @@ fn transfer_with_bank<SPI, D, E>(
   operation: Operation,
 ) -> Result<u16, Error<E>>
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   let mut last_value1 = None;
@@ -32,7 +32,7 @@ where
 /// Types implementing this trait can be read using [`Scl3300::read`](crate::Scl3300::read).
 pub trait OffFrameRead<SPI, D, E>: Sized
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   /// Start an off-frame read.
@@ -48,7 +48,7 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Acceleration
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   fn start_read(
@@ -71,7 +71,7 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Inclination
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   fn start_read(
@@ -93,7 +93,7 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Temperature
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   fn start_read(
@@ -113,7 +113,7 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for SelfTest
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   fn start_read(
@@ -133,7 +133,7 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for ComponentId
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   fn start_read(
@@ -153,7 +153,7 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Serial
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   fn start_read(
@@ -174,7 +174,7 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Status
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   fn start_read(
@@ -194,7 +194,7 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Error1
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   fn start_read(
@@ -214,7 +214,7 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Error2
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
   D: DelayNs,
 {
   fn start_read(
@@ -236,7 +236,7 @@ macro_rules! off_frame_read_tuple {
   ($($var:ident: $value:ident),+) => {
     impl<SPI, D, E, $($value),+> OffFrameRead<SPI, D, E> for ($($value),+)
     where
-      SPI: SpiBus<u8, Error = E>,
+      SPI: SpiDevice<u8, Error = E>,
       D: DelayNs,
       $(
         $value: OffFrameRead<SPI, D, E>,

@@ -7,28 +7,90 @@
 //! # fn main() -> Result<(), scl3300::Error<embedded_hal::spi::ErrorKind>> {
 //! # use embedded_hal_mock::eh1::{spi::{Mock as SpiMock, Transaction as SpiTransaction}, delay::NoopDelay};
 //! # let spi = SpiMock::new(&[
-//! #   SpiTransaction::transfer_in_place(vec![0xB4, 0x00, 0x20, 0x98], vec![3, 0, 0, 125]), // Reset.
-//! #   SpiTransaction::transfer_in_place(vec![0xB4, 0x00, 0x02, 0x25], vec![3, 0, 0, 125]), // Change to inclination mode.
-//! #   SpiTransaction::transfer_in_place(vec![0xB0, 0x00, 0x1F, 0x6F], vec![183, 0, 2, 169]), // Enable angle outputs.
-//! #   SpiTransaction::transfer_in_place(vec![0x18, 0x00, 0x00, 0xE5], vec![179, 0, 31, 227]), // Read status.
-//! #   SpiTransaction::transfer_in_place(vec![0x18, 0x00, 0x00, 0xE5], vec![27, 0, 18, 158]), // Read status.
-//! #   SpiTransaction::transfer_in_place(vec![0x18, 0x00, 0x00, 0xE5], vec![25, 0, 18, 157]), // Read status.
+//! #   // Reset.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0xB4, 0x00, 0x20, 0x98], vec![3, 0, 0, 125]),
+//! #   SpiTransaction::transaction_end(),
 //! #
-//! #   SpiTransaction::transfer_in_place(vec![0x40, 0x00, 0x00, 0x91], vec![25, 0, 0, 106]), // Read WHOAMI.
-//! #   SpiTransaction::transfer_in_place(vec![0xFC, 0x00, 0x00, 0x73], vec![65, 0, 193, 54]), // Switch to bank 0.
+//! #   // Change to inclination mode.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0xB4, 0x00, 0x02, 0x25], vec![3, 0, 0, 125]),
+//! #   SpiTransaction::transaction_end(),
 //! #
-//! #   SpiTransaction::transfer_in_place(vec![0x04, 0x00, 0x00, 0xF7], vec![25, 0, 0, 106]), // Read X-axis acceleration.
-//! #   SpiTransaction::transfer_in_place(vec![0x08, 0x00, 0x00, 0xFD], vec![5, 255, 230, 197]), // Read Y-axis acceleration.
-//! #   SpiTransaction::transfer_in_place(vec![0x0C, 0x00, 0x00, 0xFB], vec![9, 0, 141, 213]), // Read Z-axis acceleration.
+//! #   // Enable angle outputs.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0xB0, 0x00, 0x1F, 0x6F], vec![183, 0, 2, 169]),
+//! #   SpiTransaction::transaction_end(),
 //! #
-//! #   SpiTransaction::transfer_in_place(vec![0x24, 0x00, 0x00, 0xC7], vec![13, 46, 112, 183]), // Read X-axis inclination.
-//! #   SpiTransaction::transfer_in_place(vec![0x28, 0x00, 0x00, 0xCD], vec![37, 255, 233, 78]), // Read Y-axis inclination.
-//! #   SpiTransaction::transfer_in_place(vec![0x2C, 0x00, 0x00, 0xCB], vec![41, 0, 123, 212]), // Read Z-axis inclination.
+//! #   // Read status.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x18, 0x00, 0x00, 0xE5], vec![179, 0, 31, 227]),
+//! #   SpiTransaction::transaction_end(),
 //! #
-//! #   SpiTransaction::transfer_in_place(vec![0x14, 0x00, 0x00, 0xEF], vec![45, 63, 129, 29]), // Read temperature.
-//! #   SpiTransaction::transfer_in_place(vec![0xFC, 0x00, 0x00, 0x73], vec![21, 22, 20, 216]), // Switch to bank 0.
+//! #   // Read status.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x18, 0x00, 0x00, 0xE5], vec![27, 0, 18, 158]),
+//! #   SpiTransaction::transaction_end(),
 //! #
-//! #   SpiTransaction::transfer_in_place(vec![0xB4, 0x00, 0x04, 0x6B], vec![253, 0, 0, 252]), // Power down.
+//! #   // Read status.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x18, 0x00, 0x00, 0xE5], vec![25, 0, 18, 157]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Read WHOAMI.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x40, 0x00, 0x00, 0x91], vec![25, 0, 0, 106]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Switch to bank 0.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0xFC, 0x00, 0x00, 0x73], vec![65, 0, 193, 54]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Read X-axis acceleration.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x04, 0x00, 0x00, 0xF7], vec![25, 0, 0, 106]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Read Y-axis acceleration.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x08, 0x00, 0x00, 0xFD], vec![5, 255, 230, 197]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Read Z-axis acceleration.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x0C, 0x00, 0x00, 0xFB], vec![9, 0, 141, 213]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Read X-axis inclination.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x24, 0x00, 0x00, 0xC7], vec![13, 46, 112, 183]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Read Y-axis inclination.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x28, 0x00, 0x00, 0xCD], vec![37, 255, 233, 78]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Read Z-axis inclination.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x2C, 0x00, 0x00, 0xCB], vec![41, 0, 123, 212]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Read temperature.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0x14, 0x00, 0x00, 0xEF], vec![45, 63, 129, 29]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Switch to bank 0.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0xFC, 0x00, 0x00, 0x73], vec![21, 22, 20, 216]),
+//! #   SpiTransaction::transaction_end(),
+//! #
+//! #   // Power down.
+//! #   SpiTransaction::transaction_start(),
+//! #   SpiTransaction::transfer_in_place(vec![0xB4, 0x00, 0x04, 0x6B], vec![253, 0, 0, 252]),
+//! #   SpiTransaction::transaction_end(),
 //! # ]);
 //! # let mut delay = NoopDelay;
 //! use scl3300::{Scl3300, Acceleration, ComponentId, Inclination, MeasurementMode, Temperature};
@@ -75,7 +137,7 @@
 
 use core::{marker::PhantomData, num::NonZeroU32};
 
-use embedded_hal::{delay::DelayNs, spi::SpiBus};
+use embedded_hal::{delay::DelayNs, spi::SpiDevice};
 
 mod error;
 pub use error::*;
@@ -137,7 +199,7 @@ impl<SPI> Scl3300<SPI> {
 
 impl<SPI, E, MODE> Scl3300<SPI, MODE>
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
 {
   /// Start the inclinometer in the given [`MeasurementMode`](enum.MeasurementMode.html).
   fn start_up_inner<D: DelayNs>(
@@ -211,7 +273,7 @@ where
 
 impl<SPI, E> Scl3300<SPI, Uninitialized>
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
 {
   /// Start the inclinometer in the given [`MeasurementMode`](enum.MeasurementMode.html).
   ///
@@ -224,7 +286,7 @@ where
 
 impl<SPI, E> Scl3300<SPI, Normal>
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
 {
   /// Read a value.
   ///
@@ -266,7 +328,7 @@ where
 
 impl<SPI, E> Scl3300<SPI, PowerDown>
 where
-  SPI: SpiBus<u8, Error = E>,
+  SPI: SpiDevice<u8, Error = E>,
 {
   /// Wake the inclinometer up from power down mode and switch to the given [`MeasurementMode`](enum.MeasurementMode.html).
   #[inline(always)]
