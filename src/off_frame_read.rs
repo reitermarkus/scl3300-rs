@@ -1,4 +1,4 @@
-use embedded_hal::blocking::{delay::DelayUs, spi::Transfer};
+use embedded_hal::{delay::DelayNs, spi::SpiBus};
 
 use crate::{
   operation::{Bank, Operation, Output},
@@ -14,8 +14,8 @@ fn transfer_with_bank<SPI, D, E>(
   operation: Operation,
 ) -> Result<u16, Error<E>>
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   let mut last_value1 = None;
 
@@ -32,8 +32,8 @@ where
 /// Types implementing this trait can be read using [`Scl3300::read`](crate::Scl3300::read).
 pub trait OffFrameRead<SPI, D, E>: Sized
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   /// Start an off-frame read.
   fn start_read(
@@ -48,8 +48,8 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Acceleration
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   fn start_read(
     scl: &mut Scl3300<SPI, Normal>,
@@ -71,8 +71,8 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Inclination
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   fn start_read(
     scl: &mut Scl3300<SPI, Normal>,
@@ -93,8 +93,8 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Temperature
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   fn start_read(
     scl: &mut Scl3300<SPI, Normal>,
@@ -113,8 +113,8 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for SelfTest
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   fn start_read(
     scl: &mut Scl3300<SPI, Normal>,
@@ -133,8 +133,8 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for ComponentId
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   fn start_read(
     scl: &mut Scl3300<SPI, Normal>,
@@ -153,8 +153,8 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Serial
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   fn start_read(
     scl: &mut Scl3300<SPI, Normal>,
@@ -174,8 +174,8 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Status
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   fn start_read(
     scl: &mut Scl3300<SPI, Normal>,
@@ -194,8 +194,8 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Error1
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   fn start_read(
     scl: &mut Scl3300<SPI, Normal>,
@@ -214,8 +214,8 @@ where
 
 impl<SPI, D, E> OffFrameRead<SPI, D, E> for Error2
 where
-  SPI: Transfer<u8, Error = E>,
-  D: DelayUs<u32>,
+  SPI: SpiBus<u8, Error = E>,
+  D: DelayNs,
 {
   fn start_read(
     scl: &mut Scl3300<SPI, Normal>,
@@ -236,8 +236,8 @@ macro_rules! off_frame_read_tuple {
   ($($var:ident: $value:ident),+) => {
     impl<SPI, D, E, $($value),+> OffFrameRead<SPI, D, E> for ($($value),+)
     where
-      SPI: Transfer<u8, Error = E>,
-      D: DelayUs<u32>,
+      SPI: SpiBus<u8, Error = E>,
+      D: DelayNs,
       $(
         $value: OffFrameRead<SPI, D, E>,
       )+

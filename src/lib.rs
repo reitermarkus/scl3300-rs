@@ -4,33 +4,33 @@
 //! # Usage
 //!
 //! ```rust
-//! # fn main() -> Result<(), scl3300::Error<embedded_hal_mock::MockError>> {
-//! # use embedded_hal_mock::{spi::{Mock as SpiMock, Transaction as SpiTransaction}, delay::MockNoop as Delay};
+//! # fn main() -> Result<(), scl3300::Error<embedded_hal::spi::ErrorKind>> {
+//! # use embedded_hal_mock::eh1::{spi::{Mock as SpiMock, Transaction as SpiTransaction}, delay::NoopDelay};
 //! # let spi = SpiMock::new(&[
-//! #   SpiTransaction::transfer(vec![0xB4, 0x00, 0x20, 0x98], vec![3, 0, 0, 125]), // Reset.
-//! #   SpiTransaction::transfer(vec![0xB4, 0x00, 0x02, 0x25], vec![3, 0, 0, 125]), // Change to inclination mode.
-//! #   SpiTransaction::transfer(vec![0xB0, 0x00, 0x1F, 0x6F], vec![183, 0, 2, 169]), // Enable angle outputs.
-//! #   SpiTransaction::transfer(vec![0x18, 0x00, 0x00, 0xE5], vec![179, 0, 31, 227]), // Read status.
-//! #   SpiTransaction::transfer(vec![0x18, 0x00, 0x00, 0xE5], vec![27, 0, 18, 158]), // Read status.
-//! #   SpiTransaction::transfer(vec![0x18, 0x00, 0x00, 0xE5], vec![25, 0, 18, 157]), // Read status.
+//! #   SpiTransaction::transfer_in_place(vec![0xB4, 0x00, 0x20, 0x98], vec![3, 0, 0, 125]), // Reset.
+//! #   SpiTransaction::transfer_in_place(vec![0xB4, 0x00, 0x02, 0x25], vec![3, 0, 0, 125]), // Change to inclination mode.
+//! #   SpiTransaction::transfer_in_place(vec![0xB0, 0x00, 0x1F, 0x6F], vec![183, 0, 2, 169]), // Enable angle outputs.
+//! #   SpiTransaction::transfer_in_place(vec![0x18, 0x00, 0x00, 0xE5], vec![179, 0, 31, 227]), // Read status.
+//! #   SpiTransaction::transfer_in_place(vec![0x18, 0x00, 0x00, 0xE5], vec![27, 0, 18, 158]), // Read status.
+//! #   SpiTransaction::transfer_in_place(vec![0x18, 0x00, 0x00, 0xE5], vec![25, 0, 18, 157]), // Read status.
 //! #
-//! #   SpiTransaction::transfer(vec![0x40, 0x00, 0x00, 0x91], vec![25, 0, 0, 106]), // Read WHOAMI.
-//! #   SpiTransaction::transfer(vec![0xFC, 0x00, 0x00, 0x73], vec![65, 0, 193, 54]), // Switch to bank 0.
+//! #   SpiTransaction::transfer_in_place(vec![0x40, 0x00, 0x00, 0x91], vec![25, 0, 0, 106]), // Read WHOAMI.
+//! #   SpiTransaction::transfer_in_place(vec![0xFC, 0x00, 0x00, 0x73], vec![65, 0, 193, 54]), // Switch to bank 0.
 //! #
-//! #   SpiTransaction::transfer(vec![0x04, 0x00, 0x00, 0xF7], vec![25, 0, 0, 106]), // Read X-axis acceleration.
-//! #   SpiTransaction::transfer(vec![0x08, 0x00, 0x00, 0xFD], vec![5, 255, 230, 197]), // Read Y-axis acceleration.
-//! #   SpiTransaction::transfer(vec![0x0C, 0x00, 0x00, 0xFB], vec![9, 0, 141, 213]), // Read Z-axis acceleration.
+//! #   SpiTransaction::transfer_in_place(vec![0x04, 0x00, 0x00, 0xF7], vec![25, 0, 0, 106]), // Read X-axis acceleration.
+//! #   SpiTransaction::transfer_in_place(vec![0x08, 0x00, 0x00, 0xFD], vec![5, 255, 230, 197]), // Read Y-axis acceleration.
+//! #   SpiTransaction::transfer_in_place(vec![0x0C, 0x00, 0x00, 0xFB], vec![9, 0, 141, 213]), // Read Z-axis acceleration.
 //! #
-//! #   SpiTransaction::transfer(vec![0x24, 0x00, 0x00, 0xC7], vec![13, 46, 112, 183]), // Read X-axis inclination.
-//! #   SpiTransaction::transfer(vec![0x28, 0x00, 0x00, 0xCD], vec![37, 255, 233, 78]), // Read Y-axis inclination.
-//! #   SpiTransaction::transfer(vec![0x2C, 0x00, 0x00, 0xCB], vec![41, 0, 123, 212]), // Read Z-axis inclination.
+//! #   SpiTransaction::transfer_in_place(vec![0x24, 0x00, 0x00, 0xC7], vec![13, 46, 112, 183]), // Read X-axis inclination.
+//! #   SpiTransaction::transfer_in_place(vec![0x28, 0x00, 0x00, 0xCD], vec![37, 255, 233, 78]), // Read Y-axis inclination.
+//! #   SpiTransaction::transfer_in_place(vec![0x2C, 0x00, 0x00, 0xCB], vec![41, 0, 123, 212]), // Read Z-axis inclination.
 //! #
-//! #   SpiTransaction::transfer(vec![0x14, 0x00, 0x00, 0xEF], vec![45, 63, 129, 29]), // Read temperature.
-//! #   SpiTransaction::transfer(vec![0xFC, 0x00, 0x00, 0x73], vec![21, 22, 20, 216]), // Switch to bank 0.
+//! #   SpiTransaction::transfer_in_place(vec![0x14, 0x00, 0x00, 0xEF], vec![45, 63, 129, 29]), // Read temperature.
+//! #   SpiTransaction::transfer_in_place(vec![0xFC, 0x00, 0x00, 0x73], vec![21, 22, 20, 216]), // Switch to bank 0.
 //! #
-//! #   SpiTransaction::transfer(vec![0xB4, 0x00, 0x04, 0x6B], vec![253, 0, 0, 252]), // Power down.
+//! #   SpiTransaction::transfer_in_place(vec![0xB4, 0x00, 0x04, 0x6B], vec![253, 0, 0, 252]), // Power down.
 //! # ]);
-//! # let mut delay = Delay;
+//! # let mut delay = NoopDelay;
 //! use scl3300::{Scl3300, Acceleration, ComponentId, Inclination, MeasurementMode, Temperature};
 //!
 //! let inclinometer = Scl3300::new(spi);
@@ -75,7 +75,7 @@
 
 use core::{marker::PhantomData, num::NonZeroU32};
 
-use embedded_hal::blocking::{delay::DelayUs, spi::Transfer};
+use embedded_hal::{delay::DelayNs, spi::SpiBus};
 
 mod error;
 pub use error::*;
@@ -137,10 +137,10 @@ impl<SPI> Scl3300<SPI> {
 
 impl<SPI, E, MODE> Scl3300<SPI, MODE>
 where
-  SPI: Transfer<u8, Error = E>,
+  SPI: SpiBus<u8, Error = E>,
 {
   /// Start the inclinometer in the given [`MeasurementMode`](enum.MeasurementMode.html).
-  fn start_up_inner<D: DelayUs<u32>>(
+  fn start_up_inner<D: DelayNs>(
     mut self,
     delay: &mut D,
     mode: MeasurementMode,
@@ -164,7 +164,7 @@ where
   }
 
   #[inline]
-  fn write<D: DelayUs<u32>>(
+  fn write<D: DelayNs>(
     &mut self,
     operation: Operation,
     delay: &mut D,
@@ -175,7 +175,7 @@ where
   }
 
   #[inline]
-  fn transfer<D: DelayUs<u32>>(
+  fn transfer<D: DelayNs>(
     &mut self,
     operation: Operation,
     delay: &mut D,
@@ -192,14 +192,14 @@ where
   }
 
   #[inline]
-  fn transfer_inner<D: DelayUs<u32>>(
+  fn transfer_inner<D: DelayNs>(
     &mut self,
     operation: Operation,
     delay: &mut D,
     wait_us: Option<NonZeroU32>,
   ) -> Result<Frame, Error<E>> {
     let mut frame = operation.to_frame();
-    let res = self.spi.transfer(frame.as_bytes_mut());
+    let res = self.spi.transfer_in_place(frame.as_bytes_mut());
     delay.delay_us(wait_us.unwrap_or(MIN_WAIT_TIME_US).get());
     if let Err(err) = res {
       return Err(Error::Spi(err))
@@ -211,24 +211,20 @@ where
 
 impl<SPI, E> Scl3300<SPI, Uninitialized>
 where
-  SPI: Transfer<u8, Error = E>,
+  SPI: SpiBus<u8, Error = E>,
 {
   /// Start the inclinometer in the given [`MeasurementMode`](enum.MeasurementMode.html).
   ///
   /// When the inclinometer is in power down mode, use [`wake_up`](Scl3300::wake_up) instead.
   #[inline(always)]
-  pub fn start_up<D: DelayUs<u32>>(
-    self,
-    delay: &mut D,
-    mode: MeasurementMode,
-  ) -> Result<Scl3300<SPI, Normal>, Error<E>> {
+  pub fn start_up<D: DelayNs>(self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
     self.start_up_inner(delay, mode)
   }
 }
 
 impl<SPI, E> Scl3300<SPI, Normal>
 where
-  SPI: Transfer<u8, Error = E>,
+  SPI: SpiBus<u8, Error = E>,
 {
   /// Read a value.
   ///
@@ -247,7 +243,7 @@ where
   /// Additinally, multiple outputs can be read by specifying a tuple.
   pub fn read<V, D>(&mut self, delay: &mut D) -> Result<V, Error<E>>
   where
-    D: DelayUs<u32>,
+    D: DelayNs,
     V: OffFrameRead<SPI, D, E>,
   {
     let mut current_bank = Bank::Zero;
@@ -262,7 +258,7 @@ where
   }
 
   /// Put the inclinometer into power down mode.
-  pub fn power_down<D: DelayUs<u32>>(mut self, delay: &mut D) -> Result<Scl3300<SPI, PowerDown>, Error<E>> {
+  pub fn power_down<D: DelayNs>(mut self, delay: &mut D) -> Result<Scl3300<SPI, PowerDown>, Error<E>> {
     self.transfer(Operation::PowerDown, delay, None)?;
     Ok(Scl3300 { spi: self.spi, mode: PowerDown { _0: PhantomData } })
   }
@@ -270,15 +266,11 @@ where
 
 impl<SPI, E> Scl3300<SPI, PowerDown>
 where
-  SPI: Transfer<u8, Error = E>,
+  SPI: SpiBus<u8, Error = E>,
 {
   /// Wake the inclinometer up from power down mode and switch to the given [`MeasurementMode`](enum.MeasurementMode.html).
   #[inline(always)]
-  pub fn wake_up<D: DelayUs<u32>>(
-    mut self,
-    delay: &mut D,
-    mode: MeasurementMode,
-  ) -> Result<Scl3300<SPI, Normal>, Error<E>> {
+  pub fn wake_up<D: DelayNs>(mut self, delay: &mut D, mode: MeasurementMode) -> Result<Scl3300<SPI, Normal>, Error<E>> {
     self.write(Operation::WakeUp, delay, Some(WAKE_UP_TIME_US))?;
     self.start_up_inner(delay, mode)
   }

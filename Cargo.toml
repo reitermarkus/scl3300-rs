@@ -1,6 +1,6 @@
 [package]
 name = "scl3300"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 readme = "ReadMe.md"
@@ -12,12 +12,15 @@ keywords = ["scl3300", "inclinometer"]
 categories = ["embedded", "hardware-support", "no-std"]
 
 [dependencies]
-bitflags = "2.4"
-embedded-hal = "0.2"
+bitflags = "2"
+embedded-hal = "1"
 libm = { version = "0.2", optional = true }
 
 [features]
 default = ["libm"]
 
 [dev-dependencies]
-embedded-hal-mock = "0.9"
+embedded-hal-mock = { version = "0.10.0" }
+
+[patch.crates-io]
+embedded-hal-mock = { git = "https://github.com/dbrgn/embedded-hal-mock" }
