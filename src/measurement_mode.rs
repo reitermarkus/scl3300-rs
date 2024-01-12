@@ -44,16 +44,24 @@ impl MeasurementMode {
     }
   }
 
-  pub(crate) const fn start_up_wait_time_us(&self) -> NonZeroU32 {
+  pub(crate) const fn start_up_wait_time_ns(&self) -> NonZeroU32 {
+    const T_25_MS: NonZeroU32 = match NonZeroU32::new(25_000_000) {
+      Some(v) => v,
+      None => unreachable!(),
+    };
+    const T_15_MS: NonZeroU32 = match NonZeroU32::new(15_000_000) {
+      Some(v) => v,
+      None => unreachable!(),
+    };
+    const T_100_MS: NonZeroU32 = match NonZeroU32::new(100_000_000) {
+      Some(v) => v,
+      None => unreachable!(),
+    };
+
     match self {
-      // SAFTEY: 25000 is not 0.
-      MeasurementMode::FullScale12 => unsafe { NonZeroU32::new_unchecked(25_000) },
-      // SAFTEY: 15000 is not 0.
-      MeasurementMode::FullScale24 => unsafe { NonZeroU32::new_unchecked(15_000) },
-      // SAFTEY: 100000 is not 0.
-      MeasurementMode::Inclination | MeasurementMode::InclinationLowNoise => unsafe {
-        NonZeroU32::new_unchecked(100_000)
-      },
+      MeasurementMode::FullScale12 => T_25_MS,
+      MeasurementMode::FullScale24 => T_15_MS,
+      MeasurementMode::Inclination | MeasurementMode::InclinationLowNoise => T_100_MS,
     }
   }
 }
